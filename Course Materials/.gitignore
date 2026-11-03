@@ -1,0 +1,13 @@
+.env
+.venv/
+/.docker-auth/
+/.gh-auth/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.log
+/backups/
+/.course-operations.log
+deploy/state/
+/evidence/
+secrets/
