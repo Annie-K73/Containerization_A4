@@ -1,0 +1,54 @@
+name: docker-delivery
+
+# This file is a valid YAML scaffold, not a deployable reference stack.
+# TD03 uses explicit docker-run definitions; TD04 completes this model.
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:1a66d744c1b459e13b05a8fca341da84cb63383e99ce262210efee5a319d4551
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-delivery}
+      POSTGRES_USER: ${POSTGRES_USER:-delivery}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    volumes:
+      # Course-owned schema input. This is not the persistent data mount;
+      # students add that separate named volume in TD04.
+      - ./db/init/001-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    # STUDENT-TASK(TD04): define the protected secret mount, persistent named
+    # volume, private data network, dependency-backed health check, restart
+    # behavior, shutdown budget and measurable resource controls. Retain the
+    # supplied narrow initialization mount and prove it from a new course volume.
+
+  delivery-api:
+    image: "${DELIVERY_API_IMAGE:?Set DELIVERY_API_IMAGE in .env}"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-0.1.0-dev}
+        GIT_SHA: ${GIT_SHA:-local}
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-course-lab}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-delivery}
+      POSTGRES_USER: ${POSTGRES_USER:-delivery}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    # STUDENT-TASK(TD04): add the secret, dependency readiness, edge/data
+    # networks, internal-only port contract, health check, restart behavior,
+    # shutdown budget and resource controls.
+    # STUDENT-TASK(TD05): after reliable operation passes, prove the non-root,
+    # read-only, capability, privilege and temporary-filesystem controls.
+
+  proxy:
+    image: nginxinc/nginx-unprivileged:1.29-alpine@sha256:8059701048a6cc7d64e8ab2812a44be70161bfa9ecfc01d69e95b8ff2a648705
+    ports:
+      - "127.0.0.1:${COURSE_HTTP_PORT:-8080}:8080"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    # STUDENT-TASK(TD04): add API readiness dependency, the edge network,
+    # proxy health, restart behavior, shutdown budget and resource controls.
+    # STUDENT-TASK(TD05): apply and test the proxy least-privilege controls.
+
+# STUDENT-TASK(TD04): declare isolated edge/data networks, the named database
+# volume and the file-backed Compose secret. The database and API must never
+# receive host port publications.

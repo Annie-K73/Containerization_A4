@@ -1,0 +1,12 @@
+# Minimal non-negotiable exclusions supplied for safety.
+.git
+.env
+.env.*
+secrets
+.docker-auth
+.gh-auth
+
+# STUDENT-TASK(TD02): complete the context policy. Exclude GitHub metadata,
+# evidence/submission packs, local environments, caches, logs, backups and
+# tests that are not required by the runtime image. Prove the effective
+# context instead of treating this comment as evidence.

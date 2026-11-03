@@ -1,0 +1,58 @@
+name: Container delivery scaffold
+
+on:
+  pull_request:
+  push:
+    branches:
+      - coursework
+    # Evidence-only candidate/verification commits must not publish a new image.
+    # TD06 reviews this allowlist when defining the release boundary.
+    paths:
+      - .github/workflows/container-delivery.yml
+      - .dockerignore
+      - Dockerfile
+      - app/**
+      - compose.yaml
+      - gunicorn.conf.py
+      - nginx/**
+      - requirements*.txt
+      - scripts/**
+      - tests/**
+      - wsgi.py
+  workflow_dispatch:
+
+# This safe baseline can test the supplied application. It cannot publish or
+# deploy. TD06 students must complete the delivery contract and prove it.
+permissions:
+  contents: read
+
+concurrency:
+  group: container-delivery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Test the supplied application contract
+        run: |
+          set -Eeuo pipefail
+          python -m pip install --require-hashes --requirement requirements-dev.txt
+          python -m compileall -q app tests
+          python -m pytest -q
+
+  # STUDENT-TASK(TD06): extend validation to reject dangerous definitions and
+  # test Dockerfile/Compose behavior. Add separate build-publish, supply-chain
+  # and release-candidate jobs. Grant packages:write only to publishing; use
+  # frozen action SHAs; tag with the full Git SHA; export and scan the exact
+  # digest; create checksum-bound SBOM/release evidence; never SSH or deploy
+  # from this workflow.
